@@ -6,7 +6,12 @@ import fetch from 'node-fetch';
 
 const port = parseInt(process.env.PORT || '8080', 10);
 const api_keys = JSON.parse(process.env.API_KEYS);
+const token_dict = JSON.parse(process.env.TOKEN_DICT);
+// console.log('token_dic is ' + JSON.stringify(token_dict['qIDxkR6EEqUiq3pi'], null, 2));
+
+
 const upstreamUrl = 'https://api.openai.com/v1/chat/completions';
+// const upstreamUrl = 'http://47.91.10.150:5174/v1/chat/completions';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,6 +27,9 @@ const app = express();
 app.disable('etag');
 app.disable('x-powered-by');
 app.use(express.json());
+// app.set('token_dict', token_dict);
+
+
 
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
@@ -35,6 +43,23 @@ const handleOptions = (req, res) => {
 };
 
 const handlePost = async (req, res) => {
+  // 验证token是否有效
+  const my_token = String(req.query.my_token);
+  console.log('my_token is ' + my_token);
+  console.log('token_dic is ' + token_dict[my_token]);
+  if (my_token) {
+    const my_token_time = token_dict[my_token]
+    const now = new Date();
+    const date = new Date(my_token_time);
+    if (date < now) {
+      console.log('data is earlier than now.');
+      return res.status(400).set(corsHeaders).type('text/plain').send('sorry,your token has expired!');
+    }
+  } else {
+    console.log('token cannot be empty!');
+    return res.status(400).set(corsHeaders).type('text/plain').send('sorry,your token cannot be empty!');
+  }
+
   const contentType = req.headers['content-type'];
   if (!contentType || contentType !== 'application/json') {
     return res.status(415).set(corsHeaders).type('text/plain').send("Unsupported media type. Use 'application/json' content type");
