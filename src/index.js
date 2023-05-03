@@ -7,7 +7,7 @@ import fetch from 'node-fetch';
 const port = parseInt(process.env.PORT || '8080', 10);
 const api_keys = JSON.parse(process.env.API_KEYS);
 const token_dict = JSON.parse(process.env.TOKEN_DICT);
-// console.log('token_dic is ' + JSON.stringify(token_dict['qIDxkR6EEqUiq3pi'], null, 2));
+console.log('token_dic is ' + JSON.stringify(token_dict, null, 2));
 
 
 const upstreamUrl = 'https://api.openai.com/v1/chat/completions';
@@ -45,15 +45,18 @@ const handleOptions = (req, res) => {
 const handlePost = async (req, res) => {
   // 验证token是否有效
   const my_token = String(req.query.my_token);
+  const my_token_time = token_dict[my_token] || ''
   console.log('my_token is ' + my_token);
-  console.log('token_dic is ' + token_dict[my_token]);
-  if (my_token) {
-    const my_token_time = token_dict[my_token]
+  console.log('token_dic is ' + my_token_time);
+  if (my_token_time) {
+
     const now = new Date();
     const date = new Date(my_token_time);
-    if (date < now) {
-      console.log('data is earlier than now.');
+    if (date <= now) {
+      console.log('token ' + my_token + ' is earlier than now.');
       return res.status(400).set(corsHeaders).type('text/plain').send('sorry,your token has expired!');
+    } else {
+      console.log('token ' + my_token + ' is ok.');
     }
   } else {
     console.log('token cannot be empty!');
